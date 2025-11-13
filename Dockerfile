@@ -2,8 +2,8 @@
 FROM python:3.11-slim
 
 # Evita geração de arquivos .pyc e força logs no console
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Instala dependências do sistema necessárias para o WeasyPrint
 RUN apt-get update && apt-get install -y \
@@ -30,8 +30,8 @@ COPY . .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Define a porta que o Render vai usar
+# Define a porta usada pelo Render
 ENV PORT=5000
 
-# Comando padrão para iniciar o app com Gunicorn
-CMD gunicorn run:app --bind 0.0.0.0:$PORT
+# Comando para iniciar o app com Gunicorn usando a factory function
+CMD gunicorn 'run:create_app()' --bind 0.0.0.0:$PORT
