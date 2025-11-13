@@ -2,20 +2,20 @@ from app import db
 from datetime import datetime
 
 class Fechamento(db.Model):
+    __tablename__ = 'fechamentos'  # 👈 isso é essencial!
+
     id = db.Column(db.Integer, primary_key=True)
-    cliente = db.Column(db.String(100), nullable=False)
+    cliente = db.Column(db.String(200), nullable=False)
     data = db.Column(db.Date, nullable=False)
-    quantidade = db.Column(db.Float, default=0)
-    cor = db.Column(db.String(50), default='')
-    descricao = db.Column(db.Text, nullable=False)
-    desconto = db.Column(db.Float, default=0)
-    valor_unitario = db.Column(db.Float, default=0)
-    criado_em = db.Column(db.DateTime, default=datetime.now)
+    descricao = db.Column(db.Text)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
 
-    @property
-    def valor_total_sem_desconto(self):
-        return self.quantidade * self.valor_unitario
+    quantidade = db.Column(db.Integer)
+    preco_unitario = db.Column(db.Numeric(12, 2))
+    cor = db.Column(db.String(100))
+    desconto = db.Column(db.Numeric(12, 2))
+    valor_sem_desconto = db.Column(db.Numeric(12, 2))
+    valor_final = db.Column(db.Numeric(12, 2))
 
-    @property
-    def valor_total_final(self):
-        return self.valor_total_sem_desconto - self.desconto
+    def __repr__(self):
+        return f"<Fechamento {self.cliente} - {self.data}>"
