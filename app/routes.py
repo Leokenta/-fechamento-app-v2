@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, make_response
 from app import db
 from app.models import Fechamento
 from datetime import datetime
-import pdfkit
+from weasyprint import HTML
 import io
 
 main = Blueprint('main', __name__)
@@ -57,17 +57,13 @@ def delete(fechamento_id):
 @main.route('/pdf/<int:fechamento_id>')
 def gerar_pdf(fechamento_id):
     f = Fechamento.query.get_or_404(fechamento_id)
-    rendered = render_template('pdf_template.html', f=f)
-    options = {
-        'enable-local-file-access': '',
-        'page-size': 'A4',
-        'encoding': 'UTF-8'
-    }
-    config = pdfkit.configuration(wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
-    pdf = pdfkit.from_string(rendered, False, options=options, configuration=config)
+    html = render_template('pdf_template.html', f=f)
+
+    # Gera PDF com WeasyPrint
+    pdf_bytes = HTML(string=html).write_pdf()
 
     return send_file(
-        io.BytesIO(pdf),
+        io.BytesIO(pdf_bytes),
         download_name=f"fechamento_{f.id}.pdf",
         as_attachment=True,
         mimetype='application/pdf'

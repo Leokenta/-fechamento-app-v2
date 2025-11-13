@@ -6,17 +6,14 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 def create_app():
-    app = Flask(__name__, instance_relative_config=True)
-    app.config.from_mapping(
-        SQLALCHEMY_DATABASE_URI='sqlite:///fechamentos.db',
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        SECRET_KEY='chave-secreta'
-    )
+    app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fechamentos.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SECRET_KEY'] = 'chave-secreta'
 
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Importa rotas
     from app.routes import main
     app.register_blueprint(main)
 
