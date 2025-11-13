@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from app import db
 from app.models import Fechamento
 from datetime import datetime
@@ -15,35 +15,46 @@ def index():
 @main.route('/add', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        f = Fechamento(
-            cliente=request.form['cliente'],
-            data=datetime.strptime(request.form['data'], '%Y-%m-%d'),
-            quantidade=float(request.form.get('quantidade', 0)),
-            cor=request.form.get('cor', ''),
-            descricao=request.form['descricao'],
-            valor_unitario=float(request.form.get('valor_unitario', 0)),
-            desconto=float(request.form.get('desconto', 0))
-        )
-        db.session.add(f)
-        db.session.commit()
-        flash('Fechamento adicionado com sucesso!', 'success')
-        return redirect(url_for('main.index'))
+        try:
+            f = Fechamento(
+                cliente=request.form['cliente'],
+                data=datetime.strptime(request.form['data'], '%Y-%m-%d'),
+                quantidade=float(request.form.get('quantidade', 0)),
+                cor=request.form.get('cor', ''),
+                descricao=request.form['descricao'],
+                valor_unitario=float(request.form.get('valor_unitario', 0)),
+                desconto=float(request.form.get('desconto', 0))
+            )
+            db.session.add(f)
+            db.session.commit()
+            flash('Fechamento adicionado com sucesso!', 'success')
+            return redirect(url_for('main.index'))
+        except Exception as e:
+            flash(f'Erro ao adicionar fechamento: {e}', 'danger')
+            return redirect(url_for('main.add'))
     return render_template('add.html')
 
 @main.route('/edit/<int:fechamento_id>', methods=['GET', 'POST'])
 def edit(fechamento_id):
     f = Fechamento.query.get_or_404(fechamento_id)
     if request.method == 'POST':
-        f.cliente = request.form['cliente']
-        f.data = datetime.strptime(request.form['data'], '%Y-%m-%d')
-        f.quantidade = float(request.form.get('quantidade', 0))
-        f.cor = request.form.get('cor', '')
-        f.descricao = request.form['descricao']
-        f.valor_unitario = float(request.form.get('valor_unitario', 0))
-        f.desconto = float(request.form.get('desconto', 0))
-        db.session.commit()
-        flash('Fechamento atualizado com sucesso!', 'success')
-        return redirect(url_for('main.index'))
+        try:
+            f.cliente = request.form['cliente']
+            f.data = datetime.strptime(request.form['data'], '%Y-%m-%d')
+            f.quantidade = float(request.form.get('quantidade', 0))
+            f.cor = request.form.get('cor', '')
+            f.descricao = request.form['descricao']
+            f.valor_unitario = float(request.form.get('valor_unitario', 0))
+            f.desconto = float(request.form.get('desconto', 0))
+            f.valor_total = f.quantidade * f.valor_unitario
+            f.valor_total_final = f.valor_total - f.desconto
+
+            db.session.commit()
+            flash('Fechamento atualizado com sucesso!', 'success')
+            return redirect(url_for('main.index'))
+        except Exception as e:
+            flash(f'Erro ao atualizar fechamento: {e}', 'danger')
+            return redirect(url_for('main.edit', fechamento_id=fechamento_id))
     return render_template('edit.html', f=f)
 
 @main.route('/delete/<int:fechamento_id>', methods=['POST'])
@@ -58,8 +69,6 @@ def delete(fechamento_id):
 def gerar_pdf(fechamento_id):
     f = Fechamento.query.get_or_404(fechamento_id)
     html = render_template('pdf_template.html', f=f)
-
-    # Gera PDF com WeasyPrint
     pdf_bytes = HTML(string=html).write_pdf()
 
     return send_file(
